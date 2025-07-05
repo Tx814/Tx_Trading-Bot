@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - Tx_Trader Bot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background-color: #ffffff;
+    }
+
+    .header {
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header span {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .card {
+      background: #002fff;
+      color: white;
+      margin: 20px;
+      padding: 20px;
+      border-radius: 15px;
+      position: relative;
+    }
+
+    .card h2 {
+      font-size: 24px;
+      margin: 5px 0;
+    }
+
+    .withdraw-btn, .history-btn {
+      position: absolute;
+      top: 20px;
+      background: white;
+      color: black;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .withdraw-btn {
+      right: 130px;
+    }
+
+    .history-btn {
+      right: 20px;
+    }
+
+    .section {
+      padding: 0 20px 40px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      text-align: center;
+    }
+
+    .section div {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .section div span {
+      margin-top: 8px;
+    }
+
+    .bottom-bar {
+      height: 20px;
+      background: #002fff;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <span>👤 Hi, <span id="username">User</span></span>
+    <span>🔔</span>
+  </div>
+
+  <div class="card">
+    <h2>$<span id="balance">100</span></h2>
+    <button class="withdraw-btn" onclick="goToWithdraw()">Withdraw</button>
+    <button class="history-btn" onclick="goToHistory()">History</button>
+    <p>Monthly reset balance: $100</p>
+  </div>
+
+  <div class="section">
+    <div>
+      <span>🔄</span>
+      <span>Reset</span>
+    </div>
+    <div>
+      <span>💽</span>
+      <span><a href="bpc.html" style="text-decoration:none; color:inherit;">Buy BPC</a></span>
+    </div>
+    <div>
+      <span>📶</span>
+      <span>Airtime</span>
+    </div>
+    <div>
+      <a href="contact.html" target="_blank" style="text-decoration: none; color: black;">
+        <span>⚗️</span>
+        <span>Contact</span>
+      </a>
+    </div>
+    <div>
+      <span>🌐</span>
+      <span><a href="group.html" target="_blank" style="text-decoration:none; color:inherit;">Group</a></span>
+    </div>
+    <div>
+      <span>📦</span>
+      <span>Cubical</span>
+    </div>
+  </div>
+
+  <div class="bottom-bar"></div>
+
+  <!-- Script to Load Info -->
+  <script>
+    const defaultBalance = 100;
+
+    // Reset balance once per month
+    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const lastLoginMonth = localStorage.getItem('lastLoginMonth');
+
+    if (lastLoginMonth !== currentMonth) {
+      localStorage.setItem('balance', defaultBalance.toString());
+      localStorage.setItem('lastLoginMonth', currentMonth);
+    }
+
+    // Show balance
+    const balanceEl = document.getElementById('balance');
+    const balance = Number(localStorage.getItem('balance') || defaultBalance);
+    balanceEl.textContent = balance.toLocaleString();
+
+    // Display username only
+    document.getElementById("username").textContent = localStorage.getItem("loggedInUser") || "User";
+
+    // Button actions
+    function goToWithdraw() {
+      window.location.href = 'pay_fee.html';  // Redirect to pay_fee.html now
+    }
+
+    function goToHistory() {
+      window.location.href = 'history.html';
+    }
+  </script>
+
+</body>
+</html>

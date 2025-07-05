@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Withdraw - Tx_Trader Bot</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f9f9f9;
+      text-align: center;
+      padding: 40px;
+    }
+
+    .container {
+      background: white;
+      max-width: 400px;
+      margin: auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      border-radius: 6px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background-color: #2a9df4;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #007ad6;
+    }
+
+    .message {
+      margin-top: 20px;
+      font-weight: bold;
+      color: green;
+    }
+
+    .disabled {
+      background-color: #ccc !important;
+      cursor: not-allowed;
+    }
+
+    #timer {
+      margin-top: 10px;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Withdraw Funds</h2>
+    <input type="text" id="accName" placeholder="Enter Account Name" required />
+    <input type="text" id="accNumber" placeholder="Enter Account Number" required />
+    <input type="number" id="withdrawAmount" placeholder="Enter Amount" required />
+    <button id="withdrawBtn" onclick="withdraw()">Withdraw</button>
+    <div id="message" class="message"></div>
+    <div id="timer"></div>
+  </div>
+
+  <script>
+    const withdrawBtn = document.getElementById('withdrawBtn');
+    const accNameInput = document.getElementById('accName');
+    const accNumberInput = document.getElementById('accNumber');
+    const amountInput = document.getElementById('withdrawAmount');
+    const messageEl = document.getElementById('message');
+    const timerEl = document.getElementById('timer');
+
+    const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+
+    const lastWithdrawTime = localStorage.getItem('lastWithdrawTime');
+    const now = new Date();
+
+    if (lastWithdrawTime) {
+      const lastTime = new Date(lastWithdrawTime);
+      const diffMs = now - lastTime;
+
+      if (diffMs < THREE_DAYS_MS) {
+        const timeLeft = THREE_DAYS_MS - diffMs;
+        disableWithdrawal(timeLeft);
+      }
+    }
+
+    function withdraw() {
+      const accName = accNameInput.value.trim();
+      const accNumber = accNumberInput.value.trim();
+      const amount = parseFloat(amountInput.value);
+      const balance = parseFloat(localStorage.getItem('balance') || '0');
+
+      if (!accName || !accNumber || !amount || amount <= 0) {
+        alert("Please fill all fields with valid data.");
+        return;
+      }
+
+      if (amount > balance) {
+        alert("Insufficient balance.");
+        return;
+      }
+
+      const newBalance = balance - amount;
+      localStorage.setItem('balance', newBalance.toString());
+
+      // Save withdrawal record
+      const now = new Date();
+      localStorage.setItem('lastWithdrawTime', now.toString());
+
+      const history = JSON.parse(localStorage.getItem("withdrawHistory")) || [];
+      history.push({
+        date: now.toLocaleString(),
+        accountName: accName,
+        accountNumber: accNumber,
+        amount: amount
+      });
+      localStorage.setItem("withdrawHistory", JSON.stringify(history));
+
+      messageEl.textContent = "✅ Withdrawal successful! Funds will arrive within 24 hours.";
+      disableWithdrawal(THREE_DAYS_MS);
+    }
+
+    function disableWithdrawal(ms) {
+      withdrawBtn.disabled = true;
+      withdrawBtn.classList.add("disabled");
+      accNameInput.disabled = true;
+      accNumberInput.disabled = true;
+      amountInput.disabled = true;
+
+      let secondsLeft = Math.floor(ms / 1000);
+      updateTimer(secondsLeft);
+
+      const countdown = setInterval(() => {
+        secondsLeft--;
+        updateTimer(secondsLeft);
+
+        if (secondsLeft <= 0) {
+          clearInterval(countdown);
+          withdrawBtn.disabled = false;
+          withdrawBtn.classList.remove("disabled");
+          accNameInput.disabled = false;
+          accNumberInput.disabled = false;
+          amountInput.disabled = false;
+          timerEl.textContent = "";
+          localStorage.removeItem("lastWithdrawTime");
+        }
+      }, 1000);
+    }
+
+    function updateTimer(seconds) {
+      const days = Math.floor(seconds / (24 * 3600));
+      const hrs = Math.floor((seconds % (24 * 3600)) / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      timerEl.textContent = `⏳ You can withdraw again in ${days}d ${hrs}h ${mins}m ${secs}s`;
+    }
+  </script>
+
+</body>
+</html>

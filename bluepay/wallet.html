@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Crypto Wallet - Tx_Trader Bot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f0f4f9;
+      padding: 20px;
+      margin: 0;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #002fff;
+    }
+    .wallet-container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #002fff;
+      color: white;
+    }
+    img {
+      width: 32px;
+      height: 32px;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    .btn {
+      padding: 6px 10px;
+      margin-right: 5px;
+      background: #002fff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .btn.sell {
+      background: red;
+    }
+    #totalValue {
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 20px;
+      text-align: center;
+    }
+    .back-btn {
+      display: inline-block;
+      margin-top: 30px;
+      padding: 10px 20px;
+      background: #002fff;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+<h2>My Crypto Wallet</h2>
+<div class="wallet-container">
+  <table id="walletTable">
+    <thead>
+      <tr>
+        <th>Coin</th>
+        <th>Symbol</th>
+        <th>Owned</th>
+        <th>Price ($)</th>
+        <th>Value ($)</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Filled by JS -->
+    </tbody>
+  </table>
+  <div id="totalValue">Total Value: $0.00</div>
+</div>
+<a href="home.html" class="back-btn">&larr; Back to Dashboard</a>
+
+<script>
+  const coins = {
+    BTC: { price: 65000, logo: "https://cryptologos.cc/logos/bitcoin-btc-logo.png" },
+    ETH: { price: 3500, logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
+    BNB: { price: 500, logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
+    SOL: { price: 140, logo: "https://cryptologos.cc/logos/solana-sol-logo.png" }
+  };
+
+  let alerts = JSON.parse(localStorage.getItem("priceAlerts") || "{}");
+
+  function simulatePrices() {
+    for (let key in coins) {
+      const change = (Math.random() * 0.1 - 0.05) * coins[key].price;
+      coins[key].price += change;
+      coins[key].price = Math.max(0.01, coins[key].price);
+
+      if (alerts[key] && ((change > 0 && coins[key].price >= alerts[key]) ||
+                         (change < 0 && coins[key].price <= alerts[key]))) {
+        alert(`${key} has reached your alert price: $${coins[key].price.toFixed(2)}`);
+        delete alerts[key];
+        localStorage.setItem("priceAlerts", JSON.stringify(alerts));
+      }
+    }
+    renderWallet();
+  }
+
+  function renderWallet() {
+    const tbody = document.querySelector("#walletTable tbody");
+    tbody.innerHTML = "";
+    let total = 0;
+    const history = JSON.parse(localStorage.getItem("transactionHistory") || "[]");
+    const holdings = {};
+
+    history.forEach(tx => {
+      const match = tx.amount.match(/(Bought|Sold) ([\d.]+) ([A-Z]+)/);
+      if (match) {
+        const action = match[1];
+        const qty = parseFloat(match[2]);
+        const symbol = match[3];
+        if (!holdings[symbol]) holdings[symbol] = 0;
+        holdings[symbol] += action === "Bought" ? qty : -qty;
+      }
+    });
+
+    for (let symbol in holdings) {
+      const amount = holdings[symbol];
+      if (amount <= 0) continue;
+      const coin = coins[symbol];
+      const value = coin.price * amount;
+      total += value;
+
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td><img src="${coin.logo}" alt="${symbol}"/> ${symbol}</td>
+        <td>${symbol}</td>
+        <td>${amount.toFixed(6)}</td>
+        <td>$${coin.price.toFixed(2)}</td>
+        <td>$${value.toFixed(2)}</td>
+        <td>
+          <button class="btn sell" onclick="sellCoin('${symbol}')">Sell</button>
+          <button class="btn" onclick="setAlert('${symbol}')">Set Alert</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    if (tbody.children.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center">No coins available.</td></tr>`;
+    }
+
+    document.getElementById("totalValue").textContent = `Total Value: $${total.toFixed(2)}`;
+  }
+
+  function sellCoin(symbol) {
+    const balance = parseFloat(localStorage.getItem("balance") || "0");
+    const history = JSON.parse(localStorage.getItem("transactionHistory") || "[]");
+    const owned = history.reduce((sum, tx) => {
+      const match = tx.amount.match(/(Bought|Sold) ([\d.]+) ([A-Z]+)/);
+      if (match && match[3] === symbol) {
+        const qty = parseFloat(match[2]);
+        return sum + (match[1] === "Bought" ? qty : -qty);
+      }
+      return sum;
+    }, 0);
+
+    const amountToSell = parseFloat(prompt(`You own ${owned.toFixed(6)} ${symbol}. How much do you want to sell?`));
+    if (isNaN(amountToSell) || amountToSell <= 0 || amountToSell > owned) return alert("Invalid amount");
+
+    const value = amountToSell * coins[symbol].price;
+    localStorage.setItem("balance", (balance + value).toFixed(2));
+    history.push({ date: new Date().toLocaleString(), amount: `Sold ${amountToSell} ${symbol} for $${value.toFixed(2)}` });
+    localStorage.setItem("transactionHistory", JSON.stringify(history));
+    alert(`Sold ${amountToSell} ${symbol} for $${value.toFixed(2)}`);
+    renderWallet();
+  }
+
+  function setAlert(symbol) {
+    const price = parseFloat(prompt(`Set alert price for ${symbol} (current: $${coins[symbol].price.toFixed(2)})`));
+    if (!isNaN(price) && price > 0) {
+      alerts[symbol] = price;
+      localStorage.setItem("priceAlerts", JSON.stringify(alerts));
+      alert(`Alert set for ${symbol} at $${price}`);
+    } else {
+      alert("Invalid price.");
+    }
+  }
+
+  renderWallet();
+  setInterval(simulatePrices, 10000);
+</script>
+</body>
+</html>

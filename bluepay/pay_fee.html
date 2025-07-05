@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pay Withdrawal Fee</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f4f4f4;
+      text-align: center;
+      padding: 40px;
+    }
+    h2 {
+      color: #002fff;
+    }
+    .fee-container {
+      background: white;
+      margin: 20px auto;
+      padding: 30px;
+      max-width: 400px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    select, button, input {
+      padding: 10px;
+      font-size: 16px;
+      width: 100%;
+      margin-top: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      background-color: #2a9df4;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #007ad6;
+    }
+    .account-info {
+      background: #f0f8ff;
+      padding: 15px;
+      margin-top: 10px;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+    #pendingSection, #codeSection {
+      display: none;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+    #timer {
+      color: red;
+    }
+    #adminApproveBtn {
+      display: none;
+      background: green;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Withdrawal Fee Payment</h2>
+
+  <div class="fee-container">
+    <p>Select fee amount:</p>
+    <select id="feeAmount">
+      <option value="8">$8</option>
+      <option value="10">$10</option>
+      <option value="15">$15</option>
+    </select>
+
+    <div class="account-info">
+      <p><strong>Send payment to:</strong></p>
+      <p>Account Name: <strong>Tx_Trader</strong></p>
+      <p>Account Number: <strong>9055493775</strong></p>
+      <p>Bank: <strong>Opay</strong></p>
+    </div>
+
+    <button onclick="submitPayment()">I Have Paid</button>
+
+    <div id="pendingSection">
+      <p id="timer">Verifying payment... please wait 5:00</p>
+      <button id="adminApproveBtn" onclick="adminApprove()">✔️ Admin Approve</button>
+    </div>
+
+    <div id="codeSection">
+      <p>Enter the 4-digit code sent to your number:</p>
+      <input type="text" id="codeInput" placeholder="Enter code" maxlength="4">
+      <button onclick="verifyCode()">Verify Code</button>
+      <p id="demoCode" style="color:green;"></p> <!-- demo -->
+    </div>
+  </div>
+
+  <script>
+    let generatedCode = '';
+
+    function submitPayment() {
+      const selectedAmount = document.getElementById('feeAmount').value;
+      localStorage.setItem('withdrawalFeePending', 'true');
+      localStorage.setItem('withdrawalFeeAmount', selectedAmount);
+
+      document.getElementById('pendingSection').style.display = 'block';
+
+      startCountdown(5 * 60); // 5 minutes = 300 seconds
+    }
+
+    function startCountdown(seconds) {
+      const timerEl = document.getElementById('timer');
+      const adminBtn = document.getElementById('adminApproveBtn');
+      const interval = setInterval(() => {
+        const min = Math.floor(seconds / 60);
+        const sec = seconds % 60;
+        timerEl.textContent = `Verifying payment... please wait ${min}:${sec < 10 ? '0' + sec : sec}`;
+        seconds--;
+
+        if (seconds < 0) {
+          clearInterval(interval);
+          timerEl.textContent = "Verification complete. Admin can now approve.";
+          adminBtn.style.display = 'block';
+        }
+      }, 1000);
+    }
+
+    function adminApprove() {
+      generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
+      localStorage.setItem('verificationCode', generatedCode);
+
+      document.getElementById('codeSection').style.display = 'block';
+      document.getElementById('adminApproveBtn').style.display = 'none';
+      document.getElementById('demoCode').textContent = "(Demo code: " + generatedCode + ")";
+    }
+
+    function verifyCode() {
+      const userCode = document.getElementById('codeInput').value;
+      const correctCode = localStorage.getItem('verificationCode');
+
+      if (userCode === correctCode) {
+        localStorage.setItem('withdrawalFeePaid', 'true');
+        localStorage.removeItem('withdrawalFeePending');
+        alert('Code correct. Redirecting to withdrawal page...');
+        window.location.href = 'withdraw.html';
+      } else {
+        alert('Incorrect code. Please try again.');
+      }
+    }
+  </script>
+
+</body>
+</html>

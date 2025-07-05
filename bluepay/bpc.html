@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Buy Crypto - Tx_Trader Bot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f4f7fc;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h2 {
+      color: #002fff;
+      margin-bottom: 10px;
+    }
+
+    #balance {
+      font-weight: bold;
+      margin-bottom: 30px;
+      font-size: 18px;
+      color: #333;
+    }
+
+    .scroll-container {
+      display: flex;
+      overflow-x: auto;
+      gap: 16px;
+      padding: 10px;
+      scroll-snap-type: x mandatory;
+    }
+
+    .coin-card {
+      min-width: 220px;
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      scroll-snap-align: start;
+      flex-shrink: 0;
+    }
+
+    .coin-card img {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 10px;
+    }
+
+    .coin-card h4 {
+      margin: 8px 0 4px;
+    }
+
+    .coin-card span {
+      font-size: 14px;
+      color: #555;
+    }
+
+    .coin-card input[type="number"] {
+      width: 90%;
+      margin-top: 8px;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    .coin-card button {
+      margin-top: 10px;
+      padding: 8px 15px;
+      background-color: #002fff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .coin-card button:hover {
+      background-color: #001ccc;
+    }
+
+    #message {
+      margin-top: 20px;
+      color: green;
+      font-weight: bold;
+    }
+
+    .back-btn {
+      display: inline-block;
+      margin-top: 30px;
+      padding: 10px 20px;
+      background: #002fff;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Buy Crypto Coins</h2>
+  <div id="balance">Balance: $<span id="balanceAmount">100</span></div>
+
+  <div class="scroll-container" id="coinScroll">
+    <!-- Coins added via JS -->
+  </div>
+
+  <p id="message"></p>
+
+  <a href="home.html" class="back-btn">← Back to Dashboard</a>
+
+  <script>
+    const coins = [
+      { name: "Bitcoin", symbol: "BTC", price: 65000, img: "https://cryptologos.cc/logos/bitcoin-btc-logo.png" },
+      { name: "Ethereum", symbol: "ETH", price: 3500, img: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
+      { name: "BNB", symbol: "BNB", price: 500, img: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
+      { name: "Solana", symbol: "SOL", price: 140, img: "https://cryptologos.cc/logos/solana-sol-logo.png" },
+      { name: "Cardano", symbol: "ADA", price: 0.45, img: "https://cryptologos.cc/logos/cardano-ada-logo.png" },
+      { name: "XRP", symbol: "XRP", price: 0.7, img: "https://cryptologos.cc/logos/xrp-xrp-logo.png" },
+      { name: "Dogecoin", symbol: "DOGE", price: 0.08, img: "https://cryptologos.cc/logos/dogecoin-doge-logo.png" },
+      { name: "Polygon", symbol: "MATIC", price: 0.75, img: "https://cryptologos.cc/logos/polygon-matic-logo.png" },
+      { name: "Tron", symbol: "TRX", price: 0.1, img: "https://cryptologos.cc/logos/tron-trx-logo.png" },
+      { name: "Litecoin", symbol: "LTC", price: 100, img: "https://cryptologos.cc/logos/litecoin-ltc-logo.png" }
+    ];
+
+    const scrollContainer = document.getElementById("coinScroll");
+    const message = document.getElementById("message");
+    const balanceAmount = document.getElementById("balanceAmount");
+
+    let balance = parseFloat(localStorage.getItem("balance") || "100");
+    balanceAmount.textContent = balance.toFixed(2);
+
+    coins.forEach((coin, index) => {
+      const card = document.createElement("div");
+      card.className = "coin-card";
+      card.innerHTML = `
+        <img src="${coin.img}" alt="${coin.name}">
+        <h4>${coin.name} (${coin.symbol})</h4>
+        <span>Price: $${coin.price.toLocaleString()}</span><br>
+        <input type="number" id="amount-${index}" placeholder="Enter $ amount" min="1" max="100">
+        <button onclick="buyCoin(${index})">Buy</button>
+      `;
+      scrollContainer.appendChild(card);
+    });
+
+    function buyCoin(index) {
+      const coin = coins[index];
+      const input = document.getElementById(`amount-${index}`);
+      const amountToSpend = parseFloat(input.value);
+
+      if (isNaN(amountToSpend) || amountToSpend <= 0) {
+        message.textContent = "⚠ Please enter a valid amount.";
+        message.style.color = "red";
+        return;
+      }
+
+      if (amountToSpend > balance) {
+        message.textContent = "❌ Not enough balance.";
+        message.style.color = "red";
+        return;
+      }
+
+      const confirmBuy = confirm(`Buy $${amountToSpend} of ${coin.name}?`);
+      if (!confirmBuy) return;
+
+      const quantity = (amountToSpend / coin.price).toFixed(6);
+      balance -= amountToSpend;
+      localStorage.setItem("balance", balance.toString());
+      balanceAmount.textContent = balance.toFixed(2);
+
+      const history = JSON.parse(localStorage.getItem("transactionHistory")) || [];
+      history.push({
+        date: new Date().toLocaleString(),
+        amount: `$${amountToSpend} - Bought ${quantity} ${coin.symbol}`
+      });
+      localStorage.setItem("transactionHistory", JSON.stringify(history));
+
+      message.style.color = "green";
+      message.textContent = `✔ You bought ${quantity} ${coin.symbol} for $${amountToSpend}.`;
+      input.value = '';
+    }
+  </script>
+
+</body>
+</html>

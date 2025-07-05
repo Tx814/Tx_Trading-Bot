@@ -1,0 +1,104 @@
+<!-- history.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction History - Tx_Trader Bot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+
+    th {
+      background-color: #002fff;
+      color: white;
+    }
+
+    .back-btn {
+      margin-top: 20px;
+      display: block;
+      width: 100%;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 10px;
+      background-color: #2a9df4;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .no-history {
+      text-align: center;
+      font-size: 16px;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Transaction History</h2>
+  <table id="historyTable">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Amount (₦)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- JavaScript will fill this -->
+    </tbody>
+  </table>
+
+  <div class="no-history" id="noHistory" style="display: none;">No transactions yet.</div>
+
+  <button class="back-btn" onclick="goBack()">Back to Dashboard</button>
+
+  <script>
+    function goBack() {
+      window.location.href = 'home.html';
+    }
+
+    const historyTable = document.getElementById('historyTable').querySelector('tbody');
+    const noHistoryMessage = document.getElementById('noHistory');
+    const history = JSON.parse(localStorage.getItem('transactionHistory')) || [];
+
+    if (history.length === 0) {
+      noHistoryMessage.style.display = 'block';
+      document.getElementById('historyTable').style.display = 'none';
+    } else {
+      history.reverse().forEach(entry => {
+        const row = historyTable.insertRow();
+        const dateCell = row.insertCell();
+        const amountCell = row.insertCell();
+        dateCell.textContent = entry.date;
+        amountCell.textContent = Number(entry.amount).toLocaleString();
+      });
+    }
+  </script>
+</body>
+</html>
